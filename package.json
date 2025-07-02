@@ -8,19 +8,20 @@
   "bugs": "https://github.com/lars-hagen/slack-user-mcp/issues",
   "type": "module",
   "bin": {
-    "slack-user-mcp": "dist/index.js"
+    "slack-user-mcp": "./index.ts"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc && shx chmod +x dist/*.js",
-    "prepare": "npm run build",
-    "watch": "tsc --watch",
-    "start": "node dist/index.js"
+    "dev": "npx tsx index.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.0.1"
+    "@modelcontextprotocol/sdk": "^1.13.2",
+    "tsx": "^4.20.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.2"
   },
   "devDependencies": {
     "@types/node": "^22",

@@ -1,372 +1,40 @@
 #!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
-  CallToolRequest,
+  type CallToolRequest,
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  Tool,
 } from "@modelcontextprotocol/sdk/types.js";
+import { SlackClient } from "./SlackClient.ts";
+import { type HttpTransportConfig, HttpTransportHandler } from "./transports/HttpTransportHandler.ts";
+import { StdioTransportHandler } from "./transports/StdioTransportHandler.ts";
+import { tools } from "./Tools.ts";
+import { type ListChannelsArgs, type PostMessageArgs, type ReplyToThreadArgs, type AddReactionArgs, type GetChannelHistoryArgs, type GetThreadRepliesArgs, type GetUsersArgs, type GetUserProfileArgs } from "./types.ts";
 
-// Type definitions for tool arguments
-interface ListChannelsArgs {
-  limit?: number;
-  cursor?: string;
+let TRANSPORT: 'stdio' | 'http' = 'stdio';
+const transportArgIndex = process.argv.findIndex(arg => arg === '--transport');
+if (transportArgIndex !== -1 && process.argv[transportArgIndex + 1]) {
+  const value = process.argv[transportArgIndex + 1];
+  if (value === 'http' || value === 'stdio') {
+    TRANSPORT = value;
+  } else {
+    console.warn(`Unknown transport '${value}', defaulting to stdio.`);
+  }
 }
 
-interface PostMessageArgs {
-  channel_id: string;
-  text: string;
-}
-
-interface ReplyToThreadArgs {
-  channel_id: string;
-  thread_ts: string;
-  text: string;
-}
-
-interface AddReactionArgs {
-  channel_id: string;
-  timestamp: string;
-  reaction: string;
-}
-
-interface GetChannelHistoryArgs {
-  channel_id: string;
-  limit?: number;
-}
-
-interface GetThreadRepliesArgs {
-  channel_id: string;
-  thread_ts: string;
-}
-
-interface GetUsersArgs {
-  cursor?: string;
-  limit?: number;
-}
-
-interface GetUserProfileArgs {
-  user_id: string;
-}
-
-// Tool definitions
-const listChannelsTool: Tool = {
-  name: "slack_list_channels",
-  description: "List public channels in the workspace with pagination",
-  inputSchema: {
-    type: "object",
-    properties: {
-      limit: {
-        type: "number",
-        description:
-          "Maximum number of channels to return (default 100, max 200)",
-        default: 100,
-      },
-      cursor: {
-        type: "string",
-        description: "Pagination cursor for next page of results",
-      },
-    },
-  },
-};
-
-const postMessageTool: Tool = {
-  name: "slack_post_message",
-  description: "Post a new message to a Slack channel",
-  inputSchema: {
-    type: "object",
-    properties: {
-      channel_id: {
-        type: "string",
-        description: "The ID of the channel to post to",
-      },
-      text: {
-        type: "string",
-        description: "The message text to post",
-      },
-    },
-    required: ["channel_id", "text"],
-  },
-};
-
-const replyToThreadTool: Tool = {
-  name: "slack_reply_to_thread",
-  description: "Reply to a specific message thread in Slack",
-  inputSchema: {
-    type: "object",
-    properties: {
-      channel_id: {
-        type: "string",
-        description: "The ID of the channel containing the thread",
-      },
-      thread_ts: {
-        type: "string",
-        description: "The timestamp of the parent message in the format '1234567890.123456'. Timestamps in the format without the period can be converted by adding the period such that 6 numbers come after it.",
-      },
-      text: {
-        type: "string",
-        description: "The reply text",
-      },
-    },
-    required: ["channel_id", "thread_ts", "text"],
-  },
-};
-
-const addReactionTool: Tool = {
-  name: "slack_add_reaction",
-  description: "Add a reaction emoji to a message",
-  inputSchema: {
-    type: "object",
-    properties: {
-      channel_id: {
-        type: "string",
-        description: "The ID of the channel containing the message",
-      },
-      timestamp: {
-        type: "string",
-        description: "The timestamp of the message to react to",
-      },
-      reaction: {
-        type: "string",
-        description: "The name of the emoji reaction (without ::)",
-      },
-    },
-    required: ["channel_id", "timestamp", "reaction"],
-  },
-};
-
-const getChannelHistoryTool: Tool = {
-  name: "slack_get_channel_history",
-  description: "Get recent messages from a channel",
-  inputSchema: {
-    type: "object",
-    properties: {
-      channel_id: {
-        type: "string",
-        description: "The ID of the channel",
-      },
-      limit: {
-        type: "number",
-        description: "Number of messages to retrieve (default 10)",
-        default: 10,
-      },
-    },
-    required: ["channel_id"],
-  },
-};
-
-const getThreadRepliesTool: Tool = {
-  name: "slack_get_thread_replies",
-  description: "Get all replies in a message thread",
-  inputSchema: {
-    type: "object",
-    properties: {
-      channel_id: {
-        type: "string",
-        description: "The ID of the channel containing the thread",
-      },
-      thread_ts: {
-        type: "string",
-        description: "The timestamp of the parent message in the format '1234567890.123456'. Timestamps in the format without the period can be converted by adding the period such that 6 numbers come after it.",
-      },
-    },
-    required: ["channel_id", "thread_ts"],
-  },
-};
-
-const getUsersTool: Tool = {
-  name: "slack_get_users",
-  description:
-    "Get a list of all users in the workspace with their basic profile information",
-  inputSchema: {
-    type: "object",
-    properties: {
-      cursor: {
-        type: "string",
-        description: "Pagination cursor for next page of results",
-      },
-      limit: {
-        type: "number",
-        description: "Maximum number of users to return (default 100, max 200)",
-        default: 100,
-      },
-    },
-  },
-};
-
-const getUserProfileTool: Tool = {
-  name: "slack_get_user_profile",
-  description: "Get detailed profile information for a specific user",
-  inputSchema: {
-    type: "object",
-    properties: {
-      user_id: {
-        type: "string",
-        description: "The ID of the user",
-      },
-    },
-    required: ["user_id"],
-  },
-};
-
-class SlackClient {
-  private headers: { Authorization: string; "Content-Type": string };
-  private isUserToken: boolean;
-
-  constructor(token: string) {
-    this.headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-    this.isUserToken = token.startsWith('xoxp-');
-  }
-
-  async getChannels(limit: number = 100, cursor?: string): Promise<any> {
-    const params = new URLSearchParams({
-      types: "public_channel",
-      exclude_archived: "true",
-      limit: Math.min(limit, 200).toString(),
-      team_id: process.env.SLACK_TEAM_ID!,
-    });
-
-    if (cursor) {
-      params.append("cursor", cursor);
-    }
-
-    const response = await fetch(
-      `https://slack.com/api/conversations.list?${params}`,
-      { headers: this.headers },
-    );
-
-    return response.json();
-  }
-
-  async postMessage(channel_id: string, text: string): Promise<any> {
-    const response = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify({
-        channel: channel_id,
-        text: text,
-        as_user: this.isUserToken
-      }),
-    });
-
-    return response.json();
-  }
-
-  async postReply(
-    channel_id: string,
-    thread_ts: string,
-    text: string,
-  ): Promise<any> {
-    const response = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify({
-        channel: channel_id,
-        thread_ts: thread_ts,
-        text: text,
-        as_user: this.isUserToken
-      }),
-    });
-
-    return response.json();
-  }
-
-  async addReaction(
-    channel_id: string,
-    timestamp: string,
-    reaction: string,
-  ): Promise<any> {
-    const response = await fetch("https://slack.com/api/reactions.add", {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify({
-        channel: channel_id,
-        timestamp: timestamp,
-        name: reaction,
-      }),
-    });
-
-    return response.json();
-  }
-
-  async getChannelHistory(
-    channel_id: string,
-    limit: number = 10,
-  ): Promise<any> {
-    const params = new URLSearchParams({
-      channel: channel_id,
-      limit: limit.toString(),
-    });
-
-    const response = await fetch(
-      `https://slack.com/api/conversations.history?${params}`,
-      { headers: this.headers },
-    );
-
-    return response.json();
-  }
-
-  async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
-    const params = new URLSearchParams({
-      channel: channel_id,
-      ts: thread_ts,
-    });
-
-    const response = await fetch(
-      `https://slack.com/api/conversations.replies?${params}`,
-      { headers: this.headers },
-    );
-
-    return response.json();
-  }
-
-  async getUsers(limit: number = 100, cursor?: string): Promise<any> {
-    const params = new URLSearchParams({
-      limit: Math.min(limit, 200).toString(),
-      team_id: process.env.SLACK_TEAM_ID!,
-    });
-
-    if (cursor) {
-      params.append("cursor", cursor);
-    }
-
-    const response = await fetch(`https://slack.com/api/users.list?${params}`, {
-      headers: this.headers,
-    });
-
-    return response.json();
-  }
-
-  async getUserProfile(user_id: string): Promise<any> {
-    const params = new URLSearchParams({
-      user: user_id,
-      include_labels: "true",
-    });
-
-    const response = await fetch(
-      `https://slack.com/api/users.profile.get?${params}`,
-      { headers: this.headers },
-    );
-
-    return response.json();
+// Parse port argument for HTTP transport
+let HTTP_PORT: number | undefined;
+const portArgIndex = process.argv.findIndex(arg => arg === '--port');
+if (portArgIndex !== -1 && process.argv[portArgIndex + 1]) {
+  const portValue = parseInt(process.argv[portArgIndex + 1], 10);
+  if (!isNaN(portValue) && portValue > 0 && portValue <= 65535) {
+    HTTP_PORT = portValue;
+  } else {
+    console.warn(`Invalid port '${process.argv[portArgIndex + 1]}', using default port 3000.`);
   }
 }
 
 async function main() {
-  const token = process.env.SLACK_TOKEN || process.env.SLACK_BOT_TOKEN;
-  const teamId = process.env.SLACK_TEAM_ID;
-
-  if (!token || !teamId) {
-    console.error(
-      "Please set SLACK_TOKEN (or SLACK_BOT_TOKEN) and SLACK_TEAM_ID environment variables",
-    );
-    process.exit(1);
-  }
-
   console.error("Starting Slack MCP Server...");
   const server = new Server(
     {
@@ -380,16 +48,23 @@ async function main() {
     },
   );
 
-  const slackClient = new SlackClient(token);
+  let token: string | undefined;
 
   server.setRequestHandler(
     CallToolRequestSchema,
-    async (request: CallToolRequest) => {
+    async (request, context) => {
       console.error("Received CallToolRequest:", request);
       try {
         if (!request.params.arguments) {
           throw new Error("No arguments provided");
         }
+
+        const authToken = token ?? extractAuthToken(context?.requestInfo?.headers?.authorization);
+        if (!authToken) {
+          throw new Error("No auth token provided. Please set SLACK_TOKEN (or SLACK_BOT_TOKEN) environment variable or provide an auth token in the request headers.");
+        }
+
+        const slackClient = new SlackClient(authToken);
 
         switch (request.params.name) {
           case "slack_list_channels": {
@@ -531,28 +206,41 @@ async function main() {
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     console.error("Received ListToolsRequest");
-    return {
-      tools: [
-        listChannelsTool,
-        postMessageTool,
-        replyToThreadTool,
-        addReactionTool,
-        getChannelHistoryTool,
-        getThreadRepliesTool,
-        getUsersTool,
-        getUserProfileTool,
-      ],
-    };
+    return { tools };
   });
 
-  const transport = new StdioServerTransport();
-  console.error("Connecting server to transport...");
-  await server.connect(transport);
+  if (TRANSPORT === 'http') {
+    const httpConfig: HttpTransportConfig = {};
+    if (HTTP_PORT !== undefined) {
+      httpConfig.port = HTTP_PORT;
+    }
+    const httpHandler = new HttpTransportHandler(server, httpConfig);
+    await httpHandler.connect();
+  } else {
+    token = process.env.SLACK_TOKEN || process.env.SLACK_BOT_TOKEN;
 
-  console.error("Slack MCP Server running on stdio");
+    if (!token) {
+      console.error(
+        "Please set SLACK_TOKEN (or SLACK_BOT_TOKEN) environment variable",
+      );
+      process.exit(1);
+    }
+
+    // Connect the server to stdio transport
+    const stdioHandler = new StdioTransportHandler(server);
+    await stdioHandler.connect();
+  }
 }
 
 main().catch((error) => {
   console.error("Fatal error in main():", error);
   process.exit(1);
 });
+
+function extractAuthToken(authHeader?: string[] | string | undefined): string | undefined {
+  let authToken = undefined;
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    authToken = authHeader.slice(7).trim();
+  }
+  return authToken;
+}
