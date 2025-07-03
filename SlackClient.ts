@@ -10,10 +10,10 @@ export class SlackClient {
       this.isUserToken = token.startsWith('xoxp-');
     }
   
-    async getChannels(limit: number = 100, cursor?: string): Promise<any> {
+    async getChannels(limit: number = 100, cursor?: string, types: string = "public_channel,private_channel", exclude_archived: boolean = true): Promise<any> {
       const params = new URLSearchParams({
-        types: "public_channel",
-        exclude_archived: "true",
+        types: types,
+        exclude_archived: exclude_archived.toString(),
         limit: Math.min(limit, 200).toString()
       });
   

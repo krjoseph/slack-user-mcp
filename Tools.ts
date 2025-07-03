@@ -7,6 +7,16 @@ const listChannelsTool: Tool = {
     inputSchema: {
       type: "object",
       properties: {
+        types: {
+            type: "string",
+            description: "Comma-separated list of channel types (public_channel, private_channel, mpim, im)",
+            default: "public_channel,private_channel"
+        },
+        exclude_archived: {
+            type: "boolean",
+            description: "Exclude archived channels",
+            default: true
+        },
         limit: {
           type: "number",
           description:
