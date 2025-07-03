@@ -37,7 +37,7 @@ export class HttpTransportHandler {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 "issuer": "https://slack.com",
-                "authorization_endpoint": "https://slack.com/oauth/v2/authorize?user_scope=channels:history,channels:read,users:read,chat:write,reactions:write&",
+                "authorization_endpoint": "https://slack.com/oauth/v2/authorize?user_scope=channels:history,channels:read,users:read,chat:write,reactions:write,groups:read&",
                 "token_endpoint": "https://slack.com/api/oauth.v2.access",
                 "scopes_supported": [
                   "channels:read",
