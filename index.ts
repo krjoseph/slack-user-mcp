@@ -73,6 +73,8 @@ async function main() {
             const response = await slackClient.getChannels(
               args.limit,
               args.cursor,
+              args.types,
+              args.exclude_archived,
             );
             return {
               content: [{ type: "text", text: JSON.stringify(response) }],

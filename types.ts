@@ -1,5 +1,7 @@
 // Type definitions for tool arguments
 export interface ListChannelsArgs {
+    types?: string;
+    exclude_archived?: boolean;
     limit?: number;
     cursor?: string;
 }
