@@ -41,3 +41,7 @@ export interface GetUsersArgs {
 export interface GetUserProfileArgs {
     user_id: string;
 }
+
+export interface GetUserByEmailArgs {
+    email: string;
+}

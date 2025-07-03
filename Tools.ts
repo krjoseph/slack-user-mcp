@@ -170,6 +170,21 @@ const getUserProfileTool: Tool = {
     },
 };
 
+const getUserByEmailTool: Tool = {
+    name: "slack_get_user_by_email",
+    description: "Find a user with an email address",
+    inputSchema: {
+      type: "object",
+      properties: {
+        email: {
+          type: "string",
+          description: "The email address of the user",
+        },
+      },
+      required: ["email"],
+    },
+};
+
 export const tools = [
     listChannelsTool,
     postMessageTool,
@@ -179,4 +194,5 @@ export const tools = [
     getThreadRepliesTool,
     getUsersTool,
     getUserProfileTool,
+    getUserByEmailTool,
 ];

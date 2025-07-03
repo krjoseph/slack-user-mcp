@@ -140,4 +140,17 @@ export class SlackClient {
   
       return response.json();
     }
+
+    async getUserByEmail(email: string): Promise<any> {
+        const params = new URLSearchParams({
+          email: email,
+        });
+
+        const response = await fetch(
+          `https://slack.com/api/users.lookupByEmail?${params}`,
+          { headers: this.headers },
+        );
+
+        return response.json();
+      }
   }

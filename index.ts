@@ -9,7 +9,7 @@ import { SlackClient } from "./SlackClient.ts";
 import { type HttpTransportConfig, HttpTransportHandler } from "./transports/HttpTransportHandler.ts";
 import { StdioTransportHandler } from "./transports/StdioTransportHandler.ts";
 import { tools } from "./Tools.ts";
-import { type ListChannelsArgs, type PostMessageArgs, type ReplyToThreadArgs, type AddReactionArgs, type GetChannelHistoryArgs, type GetThreadRepliesArgs, type GetUsersArgs, type GetUserProfileArgs } from "./types.ts";
+import { type ListChannelsArgs, type PostMessageArgs, type ReplyToThreadArgs, type AddReactionArgs, type GetChannelHistoryArgs, type GetThreadRepliesArgs, type GetUsersArgs, type GetUserProfileArgs, type GetUserByEmailArgs } from "./types.ts";
 
 let TRANSPORT: 'stdio' | 'http' = 'stdio';
 const transportArgIndex = process.argv.findIndex(arg => arg === '--transport');
@@ -182,6 +182,18 @@ async function main() {
               throw new Error("Missing required argument: user_id");
             }
             const response = await slackClient.getUserProfile(args.user_id);
+            return {
+              content: [{ type: "text", text: JSON.stringify(response) }],
+            };
+          }
+
+          case "slack_get_user_by_email": {
+            const args = request.params
+              .arguments as unknown as GetUserByEmailArgs;
+            if (!args.email) {
+              throw new Error("Missing required argument: email");
+            }
+            const response = await slackClient.getUserByEmail(args.email);
             return {
               content: [{ type: "text", text: JSON.stringify(response) }],
             };
