@@ -1,0 +1,38 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/dist": true,
+    "bazel-*": true,
+    "**/.cache": true
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "@mui/material",
+    "@mui/lab"
+  ],
+  "editor.renderWhitespace": "all",
+  "tslint.ignoreDefinitionFiles": false,
+  "tslint.autoFixOnSave": true,
+  "tslint.exclude": [
+    "**/node_modules/**",
+    "**/typings/**",
+    "**/routing-controllers/test/**"
+  ],
+  "typescript.tsdk": "ts/node_modules/typescript/lib"
+}
