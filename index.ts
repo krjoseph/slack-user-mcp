@@ -4,13 +4,13 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { SlackClient } from './SlackClient.ts';
-import { tools } from './Tools.ts';
+import { SlackClient } from './SlackClient.js';
+import { tools } from './Tools.js';
 import {
   type HttpTransportConfig,
   HttpTransportHandler,
-} from './transports/HttpTransportHandler.ts';
-import { StdioTransportHandler } from './transports/StdioTransportHandler.ts';
+} from './transports/HttpTransportHandler.js';
+import { StdioTransportHandler } from './transports/StdioTransportHandler.js';
 import {
   type AddReactionArgs,
   type GetChannelHistoryArgs,
@@ -21,7 +21,7 @@ import {
   type ListChannelsArgs,
   type PostMessageArgs,
   type ReplyToThreadArgs,
-} from './types.ts';
+} from './types.js';
 
 let TRANSPORT: 'stdio' | 'http' = 'stdio';
 const transportArgIndex = process.argv.findIndex(
