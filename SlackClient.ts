@@ -117,19 +117,61 @@ export class SlackClient {
   }
 
   async getUsers(limit: number = 100, cursor?: string): Promise<any> {
-    const params = new URLSearchParams({
-      limit: Math.min(limit, 200).toString(),
-    });
+    const maxUsers = Math.min(limit, 200);
+    let activeUsers: any[] = [];
+    let nextCursor: string | undefined = cursor;
 
-    if (cursor) {
-      params.append('cursor', cursor);
+    while (true) {
+      const params = new URLSearchParams({
+        limit: maxUsers.toString(),
+      });
+      if (nextCursor) {
+        params.append('cursor', nextCursor);
+      }
+
+      const response = await fetch(
+        `https://slack.com/api/users.list?${params}`,
+        {
+          headers: this.headers,
+        }
+      );
+
+      const {
+        members: users,
+        response_metadata: { next_cursor },
+      } = await response.json();
+      nextCursor = next_cursor;
+
+      const slackbot = users.filter((_: any) => _.id === 'USLACKBOT');
+      if (slackbot.length > 0) {
+        console.log('Slackbot found', JSON.stringify(slackbot));
+      }
+
+      activeUsers.push(
+        ...users
+          .filter(
+            (user: any) =>
+              !user.deleted &&
+              !user.is_bot &&
+              !user.is_restricted &&
+              !!user.profile.email
+          )
+          .map((user: any) => ({
+            id: user.id,
+            name: user.name,
+            email: user.profile.email,
+            fullname: user.profile.real_name,
+            title: user.profile.title,
+          }))
+      );
+
+      // maxUsers is not strictly enforced, the activeUsers array may contain more
+      // than maxUsers based on the users fetched in the last round.
+      if (!nextCursor || activeUsers.length >= maxUsers) {
+        break;
+      }
     }
-
-    const response = await fetch(`https://slack.com/api/users.list?${params}`, {
-      headers: this.headers,
-    });
-
-    return response.json();
+    return activeUsers;
   }
 
   async getUserProfile(user_id: string): Promise<any> {
