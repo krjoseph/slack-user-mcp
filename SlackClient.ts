@@ -142,11 +142,6 @@ export class SlackClient {
       } = await response.json();
       nextCursor = next_cursor;
 
-      const slackbot = users.filter((_: any) => _.id === 'USLACKBOT');
-      if (slackbot.length > 0) {
-        console.log('Slackbot found', JSON.stringify(slackbot));
-      }
-
       activeUsers.push(
         ...users
           .filter(
