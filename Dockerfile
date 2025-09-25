@@ -3,6 +3,7 @@ FROM node:22.12-alpine AS builder
 # Copy necessary files for the build
 COPY package*.json tsconfig.json *.ts ./
 COPY ./transports ./transports
+COPY ./utils ./utils
 
 WORKDIR /
 
