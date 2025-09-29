@@ -28,6 +28,10 @@ const listChannelsTool: Tool = {
         type: 'string',
         description: 'Pagination cursor for next page of results',
       },
+      query: {
+        type: 'string',
+        description: 'Query to filter channels by name',
+      },
     },
   },
 };

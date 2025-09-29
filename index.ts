@@ -92,7 +92,8 @@ async function main() {
             args.limit,
             args.cursor,
             args.types,
-            args.exclude_archived
+            args.exclude_archived,
+            args.query
           );
           return {
             content: [{ type: 'text', text: JSON.stringify(response) }],

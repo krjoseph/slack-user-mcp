@@ -4,6 +4,7 @@ export interface ListChannelsArgs {
   exclude_archived?: boolean;
   limit?: number;
   cursor?: string;
+  query?: string;
 }
 
 export interface PostMessageArgs {
