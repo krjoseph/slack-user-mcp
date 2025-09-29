@@ -21,12 +21,16 @@ const listChannelsTool: Tool = {
       limit: {
         type: 'number',
         description:
-          'Maximum number of channels to return (default 100, max 200)',
-        default: 100,
+          'Maximum number of channels to return (default 50, max 200)',
+        default: 50,
       },
       cursor: {
         type: 'string',
         description: 'Pagination cursor for next page of results',
+      },
+      query: {
+        type: 'string',
+        description: 'Query to filter channels by name',
       },
     },
   },
@@ -151,8 +155,12 @@ const getUsersTool: Tool = {
       },
       limit: {
         type: 'number',
-        description: 'Maximum number of users to return (default 100, max 200)',
-        default: 100,
+        description: 'Maximum number of users to return (default 50, max 200)',
+        default: 50,
+      },
+      query: {
+        type: 'string',
+        description: 'Query to filter users by name or email',
       },
     },
   },

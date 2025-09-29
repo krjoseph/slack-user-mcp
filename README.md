@@ -12,7 +12,7 @@ MCP Server for the Slack API, enabling Claude to interact with Slack workspaces 
 
    - List public channels in the workspace
    - Optional inputs:
-     - `limit` (number, default: 100, max: 200): Maximum number of channels to return
+     - `limit` (number, default: 50, max: 200): Maximum number of channels to return
      - `cursor` (string): Pagination cursor for next page
    - Returns: List of channels with their IDs and information
 
@@ -64,7 +64,7 @@ MCP Server for the Slack API, enabling Claude to interact with Slack workspaces 
    - Get list of workspace users with basic profile information
    - Optional inputs:
      - `cursor` (string): Pagination cursor for next page
-     - `limit` (number, default: 100, max: 200): Maximum users to return
+     - `limit` (number, default: 50, max: 200): Maximum users to return
    - Returns: List of users with their basic profiles
 
 8. `slack_get_user_profile`

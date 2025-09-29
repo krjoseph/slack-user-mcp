@@ -4,6 +4,7 @@ export interface ListChannelsArgs {
   exclude_archived?: boolean;
   limit?: number;
   cursor?: string;
+  query?: string;
 }
 
 export interface PostMessageArgs {
@@ -36,6 +37,7 @@ export interface GetThreadRepliesArgs {
 export interface GetUsersArgs {
   cursor?: string;
   limit?: number;
+  query?: string;
 }
 
 export interface GetUserProfileArgs {

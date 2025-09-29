@@ -92,7 +92,8 @@ async function main() {
             args.limit,
             args.cursor,
             args.types,
-            args.exclude_archived
+            args.exclude_archived,
+            args.query
           );
           return {
             content: [{ type: 'text', text: JSON.stringify(response) }],
@@ -181,7 +182,11 @@ async function main() {
 
         case 'slack_get_users': {
           const args = request.params.arguments as unknown as GetUsersArgs;
-          const response = await slackClient.getUsers(args.limit, args.cursor);
+          const response = await slackClient.getUsers(
+            args.limit,
+            args.cursor,
+            args.query
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(response) }],
           };
