@@ -160,11 +160,16 @@ export class HttpTransportHandler {
           JSON.stringify({
             issuer: 'https://slack.com',
             authorization_endpoint:
-              'https://slack.com/oauth/v2/authorize?user_scope=channels:history,channels:read,users:read,chat:write,reactions:write,groups:read,users:read.email&',
+              'https://slack.com/oauth/v2/authorize?user_scope=channels:history,channels:read,users:read,chat:write,reactions:write,groups:read,users:read.email,users.profile:read,groups:history&',
             token_endpoint: 'https://slack.com/api/oauth.v2.access',
             scopes_supported: [
               'channels:read',
-              'channels:write',
+              'channels:history',
+              'groups:read',
+              'groups:history',
+              'users.profile:read',
+              'reactions:write',
+              'reactions:read',
               'chat:write',
               'users:read',
               'users:read.email',

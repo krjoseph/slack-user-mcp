@@ -38,7 +38,7 @@ if [ -n "$(git status --porcelain package.json)" ]; then
 fi
 
 # Set the branch to deploy
-BRANCH_TO_DEPLOY="separate-transport-per-request"
+BRANCH_TO_DEPLOY="support-query-channels-users"
 
 # Push to Heroku
 git push heroku $BRANCH_TO_DEPLOY:main
