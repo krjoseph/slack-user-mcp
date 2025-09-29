@@ -37,6 +37,7 @@ export interface GetThreadRepliesArgs {
 export interface GetUsersArgs {
   cursor?: string;
   limit?: number;
+  query?: string;
 }
 
 export interface GetUserProfileArgs {
