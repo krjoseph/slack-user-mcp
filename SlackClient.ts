@@ -11,14 +11,14 @@ export class SlackClient {
   }
 
   async getChannels(
-    limit: number = 50,
+    limit: number = 100,
     cursor?: string,
     types: string = 'public_channel,private_channel',
     exclude_archived: boolean = true,
     query?: string
   ): Promise<any[] | { channels: any[]; cursor?: string }> {
     const maxChannels = Math.min(limit, 200);
-    const maxExecutionTime = 10 * 1000; // 10 seconds
+    const maxExecutionTime = 20 * 1000; // 10 seconds
     const filteredChannels = [];
     let nextCursor: string | undefined = cursor;
 
@@ -28,9 +28,12 @@ export class SlackClient {
       const params = new URLSearchParams({
         types: types,
         exclude_archived: exclude_archived.toString(),
-        limit: Math.min(limit, 200).toString(),
+        // Assuming most of the results will get filtered out by the query
+        // so we fetch more than the limit to be safe
+        limit: query ? '200' : Math.min(limit, 200).toString(),
         ...(nextCursor && { cursor: nextCursor }),
       });
+      console.log(`Fetching channels with params: ${params.toString()}`);
 
       const response = await fetch(
         `https://slack.com/api/conversations.list?${params}`,
@@ -46,6 +49,11 @@ export class SlackClient {
         channels,
         response_metadata: { next_cursor },
       } = responseData;
+      console.log(
+        `Fetched ${channels.length} channels in ${
+          performance.now() - startTime
+        }ms`
+      );
 
       nextCursor = next_cursor;
 
@@ -65,6 +73,9 @@ export class SlackClient {
           ],
         };
       }
+      console.log(
+        `Channel ${query} not found. Continuing with partial search...`
+      );
 
       filteredChannels.push(
         ...channels
@@ -81,6 +92,8 @@ export class SlackClient {
             is_private: channel.is_private,
           }))
       );
+      console.log(`Found ${filteredChannels.length} channels after filtering.`);
+      console.log(`Total execution time: ${performance.now() - startTime}ms`);
     } while (
       nextCursor &&
       filteredChannels.length < maxChannels &&
