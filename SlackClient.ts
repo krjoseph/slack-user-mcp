@@ -1,5 +1,3 @@
-import { handleTokenError } from './utils/handleTokenError';
-
 export class SlackClient {
   private headers: { Authorization: string; 'Content-Type': string };
   private isUserToken: boolean;
@@ -42,7 +40,7 @@ export class SlackClient {
         { headers: this.headers }
       );
 
-      const responseData = handleTokenError(await response.json());
+      const responseData = this.handleTokenError(await response.json());
 
       if (!responseData.ok && responseData.error === 'ratelimited') {
         break;
@@ -178,7 +176,7 @@ export class SlackClient {
       }),
     });
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   async postReply(
@@ -197,7 +195,7 @@ export class SlackClient {
       }),
     });
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   async addReaction(
@@ -215,7 +213,7 @@ export class SlackClient {
       }),
     });
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   async getChannelHistory(
@@ -232,7 +230,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
@@ -246,7 +244,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   async getUsers(
@@ -273,7 +271,7 @@ export class SlackClient {
           headers: this.headers,
         }
       );
-      const responseData = handleTokenError(await response.json());
+      const responseData = this.handleTokenError(await response.json());
       if (!responseData.ok && responseData.error === 'ratelimited') {
         break;
       }
@@ -337,7 +335,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   async getUserByEmail(email: string): Promise<any> {
@@ -350,7 +348,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    return handleTokenError(await response.json());
+    return this.handleTokenError(await response.json());
   }
 
   private handleTokenError(responseData: any): any {
