@@ -7,30 +7,35 @@ const listChannelsTool: Tool = {
   inputSchema: {
     type: 'object',
     properties: {
+      query: {
+        type: 'string',
+        description: 'Query to find and filter channels by name',
+        required: false,
+      },
       types: {
         type: 'string',
         description:
-          'Comma-separated list of channel types (public_channel, private_channel, mpim, im)',
-        default: 'public_channel,private_channel',
+          'Comma-separated list of channel types (public_channel, private_channel). Default is public_channel.',
+        default: 'public_channel',
+        required: false,
       },
       exclude_archived: {
         type: 'boolean',
-        description: 'Exclude archived channels',
+        description: 'Exclude archived channels. Default is true.',
         default: true,
+        required: false,
       },
       limit: {
         type: 'number',
         description:
-          'Maximum number of channels to return (default 50, max 200)',
-        default: 50,
+          'Maximum number of channels to return (default 100, max 200).',
+        default: 100,
+        required: false,
       },
       cursor: {
         type: 'string',
         description: 'Pagination cursor for next page of results',
-      },
-      query: {
-        type: 'string',
-        description: 'Query to filter channels by name',
+        required: false,
       },
     },
   },
