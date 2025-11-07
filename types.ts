@@ -8,7 +8,8 @@ export interface ListChannelsArgs {
 }
 
 export interface PostMessageArgs {
-  channel_id: string;
+  channel_name?: string;
+  channel_id?: string;
   text: string;
 }
 

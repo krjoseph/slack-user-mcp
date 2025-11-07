@@ -102,12 +102,13 @@ async function main() {
 
         case 'slack_post_message': {
           const args = request.params.arguments as unknown as PostMessageArgs;
-          if (!args.channel_id || !args.text) {
-            throw new Error('Missing required arguments: channel_id and text');
+          if (!args.text) {
+            throw new Error('Missing required arguments: text');
           }
           const response = await slackClient.postMessage(
-            args.channel_id,
-            args.text
+            args.text,
+            args.channel_name,
+            args.channel_id
           );
           return {
             content: [{ type: 'text', text: JSON.stringify(response) }],
