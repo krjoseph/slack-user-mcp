@@ -10,32 +10,27 @@ const listChannelsTool: Tool = {
       query: {
         type: 'string',
         description: 'Query to find and filter channels by name',
-        required: false,
       },
       types: {
         type: 'string',
         description:
           'Comma-separated list of channel types (public_channel, private_channel). Default is public_channel.',
         default: 'public_channel',
-        required: false,
       },
       exclude_archived: {
         type: 'boolean',
         description: 'Exclude archived channels. Default is true.',
         default: true,
-        required: false,
       },
       limit: {
         type: 'number',
         description:
           'Maximum number of channels to return (default 100, max 200).',
         default: 100,
-        required: false,
       },
       cursor: {
         type: 'string',
         description: 'Pagination cursor for next page of results',
-        required: false,
       },
     },
   },
@@ -47,6 +42,10 @@ const postMessageTool: Tool = {
   inputSchema: {
     type: 'object',
     properties: {
+      channel_name: {
+        type: 'string',
+        description: 'The name of the channel to post to',
+      },
       channel_id: {
         type: 'string',
         description: 'The ID of the channel to post to',
@@ -56,7 +55,7 @@ const postMessageTool: Tool = {
         description: 'The message text to post',
       },
     },
-    required: ['channel_id', 'text'],
+    required: ['text'],
   },
 };
 

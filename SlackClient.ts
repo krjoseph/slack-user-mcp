@@ -1,4 +1,4 @@
-import type { SlackError } from './utils/SlackError';
+import { handleTokenError } from './utils/handleTokenError';
 
 export class SlackClient {
   private headers: { Authorization: string; 'Content-Type': string };
@@ -18,9 +18,9 @@ export class SlackClient {
     types?: string,
     exclude_archived?: boolean,
     query?: string
-  ): Promise<any[] | { channels: any[]; cursor?: string } | SlackError> {
+  ): Promise<any[] | { channels: any[]; cursor?: string }> {
     const maxChannels = Math.min(limit ?? 100, 200);
-    const maxExecutionTime = 20 * 1000; // 10 seconds
+    const maxExecutionTime = 20 * 1000; // 20 seconds
     const filteredChannels = [];
     let nextCursor: string | undefined = cursor;
 
@@ -42,14 +42,7 @@ export class SlackClient {
         { headers: this.headers }
       );
 
-      const responseData = await response.json();
-      if ((responseData as any).error === 'token_revoked') {
-        return {
-          isError: true,
-          error_message:
-            'Your token has been revoked. Please relogin to Slack MCP integration.',
-        };
-      }
+      const responseData = handleTokenError(await response.json());
 
       if (!responseData.ok && responseData.error === 'ratelimited') {
         break;
@@ -116,27 +109,76 @@ export class SlackClient {
     };
   }
 
-  async postMessage(channel_id: string, text: string): Promise<any> {
+  async postMessage(
+    text: string,
+    channel_name?: string,
+    channel_id?: string
+  ): Promise<any> {
+    if ((channel_name && channel_id) || (!channel_name && !channel_id)) {
+      throw new Error(
+        "Provide one of 'channel_name' or 'channel_id', not both."
+      );
+    }
+
+    let channelId = channel_id;
+
+    if (channel_name) {
+      let channels = (
+        (await this.getChannels(
+          200,
+          undefined,
+          'public_channel',
+          true,
+          channel_name
+        )) as any
+      )?.channels;
+      console.log(
+        `Found ${channels?.length} public channels for name '${channel_name}'.`
+      );
+      console.log(channels);
+
+      if (!channels?.length) {
+        console.log(
+          `No public channels found for name '${channel_name}'. Searching private channels...`
+        );
+        channels = (
+          (await this.getChannels(
+            200,
+            undefined,
+            'private_channel',
+            true,
+            channel_name
+          )) as any
+        )?.channels;
+      }
+
+      if (!channels?.length) {
+        throw new Error(
+          `Channel '${channel_name}' not found. Verify channel name using slack_list_channels tool.`
+        );
+      }
+
+      channelId = channels.find(
+        (_: { name: string }) => _?.name === channel_name
+      )?.id;
+      if (!channelId) {
+        throw new Error(
+          `Channel '${channel_name}' not found. Verify channel name using slack_list_channels tool.`
+        );
+      }
+    }
+
     const response = await fetch('https://slack.com/api/chat.postMessage', {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify({
-        channel: channel_id,
+        channel: channelId,
         text: text,
         as_user: this.isUserToken,
       }),
     });
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-
-    return responseData;
+    return handleTokenError(await response.json());
   }
 
   async postReply(
@@ -155,15 +197,7 @@ export class SlackClient {
       }),
     });
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-    return responseData;
+    return handleTokenError(await response.json());
   }
 
   async addReaction(
@@ -181,15 +215,7 @@ export class SlackClient {
       }),
     });
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-    return responseData;
+    return handleTokenError(await response.json());
   }
 
   async getChannelHistory(
@@ -206,15 +232,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-    return responseData;
+    return handleTokenError(await response.json());
   }
 
   async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
@@ -228,15 +246,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-    return responseData;
+    return handleTokenError(await response.json());
   }
 
   async getUsers(
@@ -263,7 +273,7 @@ export class SlackClient {
           headers: this.headers,
         }
       );
-      const responseData = await response.json();
+      const responseData = handleTokenError(await response.json());
       if (!responseData.ok && responseData.error === 'ratelimited') {
         break;
       }
@@ -327,15 +337,7 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-    return responseData;
+    return handleTokenError(await response.json());
   }
 
   async getUserByEmail(email: string): Promise<any> {
@@ -348,14 +350,6 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    const responseData = await response.json();
-    if ((responseData as any).error === 'token_revoked') {
-      return {
-        isError: true,
-        error_message:
-          'Your token has been revoked. Please relogin to Slack MCP integration.',
-      };
-    }
-    return responseData;
+    return handleTokenError(await response.json());
   }
 }
