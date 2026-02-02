@@ -90,6 +90,9 @@ MCP Server for the Slack API, enabling Claude to interact with Slack workspaces 
    - `chat:write` - Send messages as yourself
    - `reactions:write` - Add emoji reactions to messages
    - `users:read` - View users and their basic information
+   - `im:write` - Open direct message conversations
+   - `im:read` - View direct message conversation details
+   - `im:history` - View messages and other content in direct messages
 
 3. Install App to Workspace:
 

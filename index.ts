@@ -14,13 +14,14 @@ import { StdioTransportHandler } from './transports/StdioTransportHandler.js';
 import {
   type AddReactionArgs,
   type GetChannelHistoryArgs,
+  type GetDmHistoryArgs,
   type GetThreadRepliesArgs,
   type GetUserByEmailArgs,
   type GetUserProfileArgs,
   type GetUsersArgs,
   type ListChannelsArgs,
   type PostMessageArgs,
-  type ReplyToThreadArgs,
+  type ReplyToThreadArgs
 } from './types.js';
 
 let TRANSPORT: 'stdio' | 'http' = 'stdio';
@@ -212,6 +213,31 @@ async function main() {
             throw new Error('Missing required argument: email');
           }
           const response = await slackClient.getUserByEmail(args.email);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(response) }],
+          };
+        }
+
+        case 'slack_get_dm_history': {
+          const args = request.params.arguments as unknown as GetDmHistoryArgs;
+          if (!args.user_id && !args.user_email) {
+            throw new Error(
+              'Missing required argument: either user_id or user_email must be provided'
+            );
+          }
+          const response = await slackClient.getDmHistory(
+            args.user_id,
+            args.user_email,
+            args.limit,
+            args.cursor
+          );
+          return {
+            content: [{ type: 'text', text: JSON.stringify(response) }],
+          };
+        }
+
+        case 'slack_get_current_user': {
+          const response = await slackClient.getCurrentUser();
           return {
             content: [{ type: 'text', text: JSON.stringify(response) }],
           };

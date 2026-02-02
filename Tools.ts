@@ -200,6 +200,42 @@ const getUserByEmailTool: Tool = {
   },
 };
 
+const getDmHistoryTool: Tool = {
+  name: 'slack_get_dm_history',
+  description: 'Get recent direct message history with a user',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      user_id: {
+        type: 'string',
+        description: 'The ID of the user to get DM history with',
+      },
+      user_email: {
+        type: 'string',
+        description: 'The email address of the user to get DM history with',
+      },
+      limit: {
+        type: 'number',
+        description: 'Number of messages to retrieve (default 10)',
+        default: 10,
+      },
+      cursor: {
+        type: 'string',
+        description: 'Pagination cursor for next page of results',
+      },
+    },
+  },
+};
+
+const getCurrentUserTool: Tool = {
+  name: 'slack_get_current_user',
+  description: 'Get information about the currently authenticated Slack user (who-am-i)',
+  inputSchema: {
+    type: 'object',
+    properties: {},
+  },
+};
+
 export const tools = [
   listChannelsTool,
   postMessageTool,
@@ -210,4 +246,6 @@ export const tools = [
   getUsersTool,
   getUserProfileTool,
   getUserByEmailTool,
+  getDmHistoryTool,
+  getCurrentUserTool,
 ];
