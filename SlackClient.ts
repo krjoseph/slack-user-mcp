@@ -337,7 +337,7 @@ export class SlackClient {
 
     return {
       hasMore: historyData.has_more,
-      messages: historyData.messages.map(_ => (
+      messages: historyData.messages.map((_: any) => (
         {
           user: _.user,
           type: _.type,
