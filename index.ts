@@ -21,7 +21,7 @@ import {
   type GetUsersArgs,
   type ListChannelsArgs,
   type PostMessageArgs,
-  type ReplyToThreadArgs,
+  type ReplyToThreadArgs
 } from './types.js';
 
 let TRANSPORT: 'stdio' | 'http' = 'stdio';
@@ -228,8 +228,16 @@ async function main() {
           const response = await slackClient.getDmHistory(
             args.user_id,
             args.user_email,
-            args.limit
+            args.limit,
+            args.cursor
           );
+          return {
+            content: [{ type: 'text', text: JSON.stringify(response) }],
+          };
+        }
+
+        case 'slack_get_current_user': {
+          const response = await slackClient.getCurrentUser();
           return {
             content: [{ type: 'text', text: JSON.stringify(response) }],
           };

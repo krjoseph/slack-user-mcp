@@ -219,7 +219,20 @@ const getDmHistoryTool: Tool = {
         description: 'Number of messages to retrieve (default 10)',
         default: 10,
       },
+      cursor: {
+        type: 'string',
+        description: 'Pagination cursor for next page of results',
+      },
     },
+  },
+};
+
+const getCurrentUserTool: Tool = {
+  name: 'slack_get_current_user',
+  description: 'Get information about the currently authenticated Slack user (who-am-i)',
+  inputSchema: {
+    type: 'object',
+    properties: {},
   },
 };
 
@@ -234,4 +247,5 @@ export const tools = [
   getUserProfileTool,
   getUserByEmailTool,
   getDmHistoryTool,
+  getCurrentUserTool,
 ];

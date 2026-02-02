@@ -241,7 +241,8 @@ export class SlackClient {
   async getDmHistory(
     user_id?: string,
     user_email?: string,
-    limit: number = 10
+    limit: number = 10,
+    cursor?: string,
   ): Promise<any> {
     let targetUserId = user_id;
 
@@ -324,6 +325,7 @@ export class SlackClient {
     const historyParams = new URLSearchParams({
       channel: conversationId,
       limit: limit.toString(),
+      ...(cursor && { cursor }),
     });
 
     const historyResponse = await fetch(
@@ -331,7 +333,21 @@ export class SlackClient {
       { headers: this.headers }
     );
 
-    return this.handleTokenError(await historyResponse.json());
+    const historyData = this.handleTokenError(await historyResponse.json());
+
+    return {
+      hasMore: historyData.has_more,
+      messages: historyData.messages.map(_ => (
+        {
+          user: _.user,
+          type: _.type,
+          text: _.text,
+          ts: _.ts,
+          reactions: _.reactions,
+        }
+      )),
+      ...(historyData.response_metadata?.next_cursor && { next_cursor: historyData.response_metadata.next_cursor }),
+    };
   }
 
   async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
@@ -453,6 +469,14 @@ export class SlackClient {
       `https://slack.com/api/users.lookupByEmail?${params}`,
       { headers: this.headers }
     );
+
+    return this.handleTokenError(await response.json());
+  }
+
+  async getCurrentUser(): Promise<any> {
+    const response = await fetch('https://slack.com/api/auth.test', {
+      headers: this.headers,
+    });
 
     return this.handleTokenError(await response.json());
   }

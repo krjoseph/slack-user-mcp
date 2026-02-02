@@ -53,4 +53,9 @@ export interface GetDmHistoryArgs {
   user_id?: string;
   user_email?: string;
   limit?: number;
+  cursor?: string;
+}
+
+export interface GetCurrentUserArgs {
+  // No arguments needed for auth.test
 }
