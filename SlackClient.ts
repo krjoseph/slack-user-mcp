@@ -46,10 +46,15 @@ export class SlackClient {
         break;
       }
 
-      const {
-        channels,
-        response_metadata: { next_cursor },
-      } = responseData;
+      if (!responseData.ok) {
+        throw new Error(
+          `Failed to fetch channels: ${responseData.error || 'Unknown error'}`
+        );
+      }
+
+      const channels = responseData.channels || [];
+      const next_cursor =
+        responseData.response_metadata?.next_cursor || undefined;
       console.log(
         `Fetched ${channels.length} channels in ${
           performance.now() - startTime
@@ -233,6 +238,102 @@ export class SlackClient {
     return this.handleTokenError(await response.json());
   }
 
+  async getDmHistory(
+    user_id?: string,
+    user_email?: string,
+    limit: number = 10
+  ): Promise<any> {
+    let targetUserId = user_id;
+
+    // If email is provided, get the user_id first
+    if (user_email && !targetUserId) {
+      const userResponse = await this.getUserByEmail(user_email);
+      if (!userResponse.ok || !userResponse.user) {
+        throw new Error(
+          `User with email '${user_email}' not found. ${userResponse.error || ''}`
+        );
+      }
+      targetUserId = userResponse.user.id;
+    }
+
+    if (!targetUserId) {
+      throw new Error('Either user_id or user_email must be provided');
+    }
+
+    let conversationId: string | undefined;
+
+    // First, try to find existing DM conversations
+    const listParams = new URLSearchParams({
+      types: 'im',
+      limit: '200',
+    });
+
+    const listResponse = await fetch(
+      `https://slack.com/api/conversations.list?${listParams}`,
+      { headers: this.headers }
+    );
+
+    const listData = this.handleTokenError(await listResponse.json());
+
+    if (listData.ok && listData.channels) {
+      // Find the DM conversation with the target user
+      const dmConversation = (listData.channels as any[]).find(
+        (channel: any) => channel.user === targetUserId
+      );
+      if (dmConversation) {
+        conversationId = dmConversation.id;
+      }
+    }
+
+    // If not found in existing conversations, try to open/create a new one
+    if (!conversationId) {
+      const openParams = new URLSearchParams({
+        users: targetUserId,
+      });
+
+      const openResponse = await fetch(
+        `https://slack.com/api/conversations.open?${openParams}`,
+        { headers: this.headers }
+      );
+
+      const openData = this.handleTokenError(await openResponse.json());
+
+      if (!openData.ok) {
+        // If opening fails, check if it's because the conversation doesn't exist
+        // In that case, return an empty result or a helpful error
+        if (openData.error === 'channel_not_found') {
+          return {
+            ok: true,
+            messages: [],
+            warning:
+              'No existing DM conversation found with this user. Start a conversation first.',
+          };
+        }
+        throw new Error(
+          `Failed to open DM conversation: ${openData.error || 'Unknown error'}`
+        );
+      }
+
+      conversationId = openData.channel?.id;
+      if (!conversationId) {
+        throw new Error('Failed to get conversation ID');
+      }
+    }
+
+    // Get the conversation history
+    const historyParams = new URLSearchParams({
+      channel: conversationId,
+      limit: limit.toString(),
+    });
+
+    const historyResponse = await fetch(
+      `https://slack.com/api/conversations.history?${historyParams}`,
+      { headers: this.headers }
+    );
+
+    return this.handleTokenError(await historyResponse.json());
+  }
+
   async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
     const params = new URLSearchParams({
       channel: channel_id,
@@ -284,10 +385,15 @@ export class SlackClient {
         };
       }
 
-      const {
-        members: users,
-        response_metadata: { next_cursor },
-      } = responseData;
+      if (!responseData.ok) {
+        throw new Error(
+          `Failed to fetch users: ${responseData.error || 'Unknown error'}`
+        );
+      }
+
+      const users = responseData.members || [];
+      const next_cursor =
+        responseData.response_metadata?.next_cursor || undefined;
       nextCursor = next_cursor;
 
       activeUsers.push(

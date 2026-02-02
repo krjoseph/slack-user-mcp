@@ -48,3 +48,9 @@ export interface GetUserProfileArgs {
 export interface GetUserByEmailArgs {
   email: string;
 }
+
+export interface GetDmHistoryArgs {
+  user_id?: string;
+  user_email?: string;
+  limit?: number;
+}
